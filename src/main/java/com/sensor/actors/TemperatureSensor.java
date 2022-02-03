@@ -1,8 +1,13 @@
 package com.sensor.actors;
 
-import java.time.Duration;
-import java.util.Optional;
-import akka.actor.Cancellable;
+// import java.time.Duration;
+// import java.util.Optional;
+// import java.util.concurrent.CompletionStage;
+// import akka.stream.javadsl.Sink;
+// import akka.stream.javadsl.Source;
+// import akka.Done;
+// import akka.NotUsed;
+// import akka.actor.Cancellable;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
@@ -10,7 +15,8 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import akka.stream.javadsl.Source;
+
+
 
 /**
  * Actor object that represents a temperature sensor.
@@ -27,14 +33,10 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	// and only one thread can access it at a time.
 	// Represents a message that will be accepted by this actor to get the
 	// temperature.
-	public static final class GetTemp implements Command {
-		final long requestId;
-		// In our case we are sending data to a stream but streams in akka also have an
-		// actor ref.
+	public static final class GetTemp implements Command {	
 		final ActorRef<CurrentTemp> replyTo;
 
-		public GetTemp(long requestId, ActorRef<CurrentTemp> replyTo) {
-			this.requestId = requestId;
+		public GetTemp(ActorRef<CurrentTemp> replyTo) {			
 			this.replyTo = replyTo;
 		}
 	}
@@ -44,7 +46,7 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	public static final class CurrentTemp {
 		final long requestId;
 		// Returns a value if something has been recorded in an optional object.
-		final Optional<Double> value;
+		final Double value;
 
 		public CurrentTemp(long requestId, Double value) {
 			this.requestId = requestId;
@@ -55,25 +57,20 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	// To create a new sensor, we need to consider certain factors such as building,
 	// floor and zone
 	// Recommended to create new devices using setup() method.
-	public static Behavior<Command> create(String buildingName, String floor, String zone) {
-		return Behaviors.setup(context -> new TemperatureSensor(context, buildingName, floor, zone));
+	public static Behavior<Command> create() {
+		return Behaviors.setup(context -> new TemperatureSensor(context));
 	}
 
 	private final String building;
 	private final String floor;
 	private final String zone;
-	private Optional<Double> prevTemp = Optional.empty();
+	private Double currTemp = 70.00;
 	private static final Double upperLimit = 76.00;
 	private static final Double lowerLimit = 64.00;
-	private Source<Double, Cancellable> randomizedTempSource = Source.tick(Duration.ofSeconds(1),
-			Duration.ofSeconds(1), (Double) ((Math.random() * (upperLimit - lowerLimit)) + lowerLimit));
-
+			
 	// Constructor defined as private. New sensor actors created using create.
-	private TemperatureSensor(ActorContext<Command> context, String building, String floor, String zone) {
-		super(context);
-		this.building = building;
-		this.floor = floor;
-		this.zone = zone;
+	private TemperatureSensor(ActorContext<Command> context) {
+		super(context);		
 		
 	}
 
@@ -99,7 +96,7 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	 * @return
 	 */
 	private Behavior<Command> getTemp(GetTemp g) {		
-		g.replyTo.tell(new CurrentTemp(g.requestId, return randomizedTempSource));
+		//g.replyTo.tell(new CurrentTemp(g.requestId, return randomizedTempSource));
 		return this;
 	}
 

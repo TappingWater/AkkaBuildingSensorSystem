@@ -1,11 +1,16 @@
 package com.sensor;
 
 import java.io.Console;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 
-import akka.actor.ActorSystem;
+import com.sensor.actors.BuildingManager;
+import com.sensor.streams.TempSource;
+import akka.actor.ActorRef;
+import akka.actor.typed.ActorSystem;
+import akka.actor.typed.Props;
+import akka.stream.javadsl.RunnableGraph;
+import akka.stream.javadsl.Sink;
 
 /**
  * Main class.
@@ -24,9 +29,10 @@ public final class App {
      * @param args The arguments of the program.
      */
     public static void main(String[] args) {
-        initializeApp();
-        final ActorSystem buildingSys = ActorSystem.create("building-sys");
-        commandLoop(buildingSys);
+        initializeApp();  
+        RunnableGraph<ActorRef> simplePrinter = TempSource.getSourceRef().to(Sink.foreach(System.out::println));          
+        final ActorSystem buildingSys = ActorSystem.create(BuildingManager.create(buildingFloors, zoneCount, simplePrinter), "building-sys");          
+        commandLoop(buildingSys, simplePrinter);
     }
 
     /**
@@ -36,10 +42,9 @@ public final class App {
      * s buildingName or
      * status buildingName.
      */
-    private static void commandLoop(ActorSystem sys) {
-        System.out.println("System will now generate alerts for sensor readings. In addition,");
-        System.out.println("You can use status or s to check status of a building. ex: s buildingName");
-        System.out.println("You can use quit or q to terminate the program.");
+    private static void commandLoop(ActorSystem sys, RunnableGraph<ActorRef> simplePrinter) {
+        System.out.println("System will now generate alerts for sensor readings. In addition,");        
+        System.out.println("You can enter 'quit' to terminate the program.");
         Scanner command = new Scanner(System.in);
         System.out.println("Enter command: ");
         boolean running = true;
