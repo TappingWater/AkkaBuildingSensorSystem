@@ -12,8 +12,18 @@ public class DeviceInfo {
 	private int floorNumber;
 	private int zoneNumber;
 	private Double reading;
+	private String type;
 
-	public DeviceInfo() {		
+	public DeviceInfo(String building, int floorNum, int zoneNum, Double reading, String type) {
+		this.buildingName = building;
+		this.floorNumber = floorNum;
+		this.zoneNumber = zoneNum;
+		this.reading = reading;
+		this.type = type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
 	}
 
 	public void setBuildingName(String n) {
@@ -32,7 +42,11 @@ public class DeviceInfo {
 		reading = d;
 	}
 
-	public String getBuildingName(){
+	public String getType() {
+		return type;
+	}
+
+	public String getBuildingName() {
 		return buildingName;
 	}
 
@@ -46,6 +60,12 @@ public class DeviceInfo {
 
 	public Double getReading() {
 		return reading;
+	}
+
+	@Override
+	public String toString() {
+		return "Temperature reading of " + reading + " detected on zone " + zoneNumber + " , located on floor "
+				+ floorNumber + " inside building named" + buildingName;
 	}
 
 }

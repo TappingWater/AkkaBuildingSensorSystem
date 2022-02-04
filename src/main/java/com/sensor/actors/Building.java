@@ -35,7 +35,7 @@ public class Building extends AbstractBehavior<Building.Command> {
 		this.floorCount = floorCount;
 		this.zoneCount = zoneCount;
 		for (int i = 1; i <= floorCount; i++) {
-			floorDetails.put(i, getContext().spawn(Floor.create(i, zoneCount), String.valueOf(i)));
+			floorDetails.put(i, getContext().spawn(Floor.create(name, i, zoneCount), String.valueOf(i)));
 		}
 	}
 

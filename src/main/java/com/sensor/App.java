@@ -5,12 +5,12 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 import com.sensor.actors.BuildingManager;
-import com.sensor.streams.TempSource;
-import akka.actor.ActorRef;
+import com.sensor.streams.DataStream;
+import com.sensor.utility.DeviceInfo;
+
 import akka.actor.typed.ActorSystem;
-import akka.actor.typed.Props;
-import akka.stream.javadsl.RunnableGraph;
-import akka.stream.javadsl.Sink;
+import akka.stream.impl.io.InputStreamSinkStage.Data;
+import akka.stream.scaladsl.Sink;
 
 /**
  * Main class.
@@ -29,10 +29,12 @@ public final class App {
      * @param args The arguments of the program.
      */
     public static void main(String[] args) {
-        initializeApp();  
-        RunnableGraph<ActorRef> simplePrinter = TempSource.getSourceRef().to(Sink.foreach(System.out::println));          
-        final ActorSystem buildingSys = ActorSystem.create(BuildingManager.create(buildingFloors, zoneCount, simplePrinter), "building-sys");          
-        commandLoop(buildingSys, simplePrinter);
+        initializeApp();
+        final ActorSystem<BuildingManager.Command> buildingSys = ActorSystem
+                .create(BuildingManager.create(buildingFloors, zoneCount), "building-sys");        
+        DataStream.generateSourceRef(buildingSys);      
+        DataStream.getStream().run(buildingSys);            
+        commandLoop(buildingSys);
     }
 
     /**
@@ -42,8 +44,8 @@ public final class App {
      * s buildingName or
      * status buildingName.
      */
-    private static void commandLoop(ActorSystem sys, RunnableGraph<ActorRef> simplePrinter) {
-        System.out.println("System will now generate alerts for sensor readings. In addition,");        
+    private static void commandLoop(ActorSystem<BuildingManager.Command> sys) {
+        System.out.println("System will now generate alerts for sensor readings. In addition,");
         System.out.println("You can enter 'quit' to terminate the program.");
         Scanner command = new Scanner(System.in);
         System.out.println("Enter command: ");
@@ -53,7 +55,7 @@ public final class App {
                 case "quit":
                     sys.terminate();
                     System.out.println("System terminated.");
-                    break;              
+                    running = false;
                 default:
                     System.out.println("Command not recognized!");
                     break;
@@ -81,7 +83,7 @@ public final class App {
                 System.out.println("Building names must be unique.");
                 bName = console.readLine("Please re-enter the name of building " + i + ":");
             }
-            buildingMap.put(console.readLine("Enter the name of building " + i + ":"),
+            buildingMap.put(bName,
                     Integer.valueOf(console.readLine("Enter the number of floors for floor " + i + ":")));
         }
         System.out.println("A zone is a dedicated area within a floor with its' own group of sensors.");
@@ -92,7 +94,8 @@ public final class App {
             System.out.println("Monitoring building: " + building + " with " + buildingMap.get(building) + " floors");
         }
         System.out.println("Each floor has " + numZones + " zones");
-        // Initialize our static variables for functions based on the user entered parameters.
+        // Initialize our static variables for functions based on the user entered
+        // parameters.
         buildingFloors = buildingMap;
         zoneCount = numZones;
     }

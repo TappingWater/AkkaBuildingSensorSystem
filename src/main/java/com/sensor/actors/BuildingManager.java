@@ -9,7 +9,6 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import akka.stream.javadsl.RunnableGraph;
 
 /**
  * This class represents the top level element in the user actor hierachy.
@@ -23,8 +22,7 @@ public class BuildingManager extends AbstractBehavior<BuildingManager.Command> {
 	private final static HashMap<String, ActorRef<Building.Command>> buildingDetails= new HashMap<String, ActorRef<Building.Command>>();
 
 	// When we create our system we call the create behavior to create our system.
-	public static Behavior<Command> create(HashMap<String, Integer> buildingSizes, int zoneCount, RunnableGraph<ActorRef> tempSource) {		
-		ActorRef centralTemp = tempSource.run();
+	public static Behavior<Command> create(HashMap<String, Integer> buildingSizes, int zoneCount) {			
 		return Behaviors.setup(context -> new BuildingManager(context, buildingSizes, zoneCount));
 	}
 

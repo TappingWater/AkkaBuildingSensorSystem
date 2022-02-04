@@ -17,13 +17,14 @@ public class Floor extends AbstractBehavior<Floor.Command> {
 	public interface Command {
 	}
 
+	private final String buildingName;
 	private final int floorNum;
 	private final int zoneCount;
 	private final HashMap<Integer, ActorRef<Zone.Command>> zoneDetails = new HashMap<Integer, ActorRef<Zone.Command>>();
 
 	// When we create our system we call the create behavior to create our system.
-	public static Behavior<Command> create(int floorNum, int zoneCount) {
-		return Behaviors.setup(context -> new Floor(context, floorNum, zoneCount));
+	public static Behavior<Command> create(String buildingName, int floorNum, int zoneCount) {
+		return Behaviors.setup(context -> new Floor(context, buildingName, floorNum, zoneCount));
 	}
 
 	/**
@@ -34,12 +35,13 @@ public class Floor extends AbstractBehavior<Floor.Command> {
 	 * @param zoneCount
 	 * The number of zones per floor
 	 */
-	private Floor(ActorContext<Command> context, int floorNum, int zoneCount) {
+	private Floor(ActorContext<Command> context, String buildingName, int floorNum, int zoneCount) {
 		super(context);
 		this.floorNum = floorNum;
 		this.zoneCount = zoneCount;
+		this.buildingName = buildingName;
 		for (int i = 1; i <= zoneCount; i++) {
-			zoneDetails.put(i, context.spawn(Zone.create(i), String.valueOf(i)));
+			zoneDetails.put(i, context.spawn(Zone.create(i, buildingName, floorNum), String.valueOf(i)));
 		}
 	}
 

@@ -1,13 +1,7 @@
 package com.sensor.actors;
 
-// import java.time.Duration;
-// import java.util.Optional;
-// import java.util.concurrent.CompletionStage;
-// import akka.stream.javadsl.Sink;
-// import akka.stream.javadsl.Source;
-// import akka.Done;
-// import akka.NotUsed;
-// import akka.actor.Cancellable;
+import com.sensor.streams.DataStream;
+import com.sensor.utility.DeviceInfo;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
@@ -15,7 +9,6 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-
 
 
 /**
@@ -33,10 +26,10 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	// and only one thread can access it at a time.
 	// Represents a message that will be accepted by this actor to get the
 	// temperature.
-	public static final class GetTemp implements Command {	
+	public static final class GetTemp implements Command {
 		final ActorRef<CurrentTemp> replyTo;
 
-		public GetTemp(ActorRef<CurrentTemp> replyTo) {			
+		public GetTemp(ActorRef<CurrentTemp> replyTo) {
 			this.replyTo = replyTo;
 		}
 	}
@@ -57,21 +50,40 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	// To create a new sensor, we need to consider certain factors such as building,
 	// floor and zone
 	// Recommended to create new devices using setup() method.
-	public static Behavior<Command> create() {
-		return Behaviors.setup(context -> new TemperatureSensor(context));
+	public static Behavior<Command> create(String buildingName, int floor, int zone) {
+		return Behaviors.setup(context -> new TemperatureSensor(context, buildingName, floor, zone));
 	}
 
 	private final String building;
-	private final String floor;
-	private final String zone;
-	private Double currTemp = 70.00;
-	private static final Double upperLimit = 76.00;
-	private static final Double lowerLimit = 64.00;
-			
+	private final int floor;
+	private final int zone;
+
 	// Constructor defined as private. New sensor actors created using create.
-	private TemperatureSensor(ActorContext<Command> context) {
-		super(context);		
-		
+	private TemperatureSensor(ActorContext<Command> context, String buildingName, int floor, int zone) {
+		super(context);
+		this.building = buildingName;
+		this.floor = floor;
+		this.zone = zone;
+		postReadings();
+	}
+
+	/**
+	 * Queue readings to source periodically
+	 * 
+	 * @return
+	 */
+	private void postReadings() {
+		while (true) {
+			try {
+				Thread.sleep(1);				
+				if (DataStream.getSourceRef().isPresent()) {					
+					Double reading = 80.0;
+					DataStream.getSourceRef().get().tell(new DeviceInfo(building, floor, zone, reading, "Temp"), null);
+				}
+			} catch (InterruptedException ie) {
+				System.out.println(ie.getMessage());
+			}
+		}
 	}
 
 	/**
@@ -95,8 +107,8 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	 *          GetTemp Message that will be sent to the actor to get a response.
 	 * @return
 	 */
-	private Behavior<Command> getTemp(GetTemp g) {		
-		//g.replyTo.tell(new CurrentTemp(g.requestId, return randomizedTempSource));
+	private Behavior<Command> getTemp(GetTemp g) {
+		// g.replyTo.tell(new CurrentTemp(g.requestId, return randomizedTempSource));
 		return this;
 	}
 
