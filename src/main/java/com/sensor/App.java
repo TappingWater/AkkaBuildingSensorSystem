@@ -32,7 +32,7 @@ public final class App {
         initializeApp();
         final ActorSystem<BuildingManager.Command> buildingSys = ActorSystem
                 .create(BuildingManager.create(buildingFloors, zoneCount), "building-sys");        
-        DataStream.generateSourceRef(buildingSys);      
+        DataStream.generateSourceRef(buildingSys);             
         DataStream.getStream().run(buildingSys);            
         commandLoop(buildingSys);
     }

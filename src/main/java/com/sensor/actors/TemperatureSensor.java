@@ -74,14 +74,9 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	 */
 	private void postReadings() {
 		while (true) {
-			try {
-				Thread.sleep(1);				
-				if (DataStream.getSourceRef().isPresent()) {					
-					Double reading = 80.0;
-					DataStream.getSourceRef().get().tell(new DeviceInfo(building, floor, zone, reading, "Temp"), null);
-				}
-			} catch (InterruptedException ie) {
-				System.out.println(ie.getMessage());
+			if (DataStream.getSourceRef().isPresent()) {					
+				Double reading = 80.0;
+				DataStream.getSourceRef().get().tell(new DeviceInfo(building, floor, zone, reading, "Temp"), null);
 			}
 		}
 	}
