@@ -23,12 +23,12 @@ import akka.stream.javadsl.Source;
 
 public class DataStream {
 
-	private static final Source<DeviceInfo, ActorRef> source = Source.actorRef(Integer.MAX_VALUE, OverflowStrategy.dropTail());
+	private static final Source<DeviceInfo, ActorRef> source = Source.actorRef(1000, OverflowStrategy.fail());
 	private static final Flow<DeviceInfo, DeviceInfo, NotUsed> filterTempReadings = Flow.of(
 		DeviceInfo.class).collect(
 			new PFBuilder<DeviceInfo, DeviceInfo>().match(
 				DeviceInfo.class,
-				(info)->info.getReading()<TemperatureConfig.lowerLimit||info.getReading()>TemperatureConfig.upperLimit,
+				(info)->info.getReading()<TemperatureConfig.lowerLimit,
 				(info)->info
 		).build());
 	private static final Sink<DeviceInfo, CompletionStage<Done>> logger = Sink.foreach(a->System.out.println(a));

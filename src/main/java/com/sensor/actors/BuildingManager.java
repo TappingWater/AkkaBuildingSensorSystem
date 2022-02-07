@@ -18,6 +18,10 @@ public class BuildingManager extends AbstractBehavior<BuildingManager.Command> {
 	public interface Command {
 	}
 
+	public static enum QueryAllSensors implements Command {
+		INSTANCE
+	}
+
 	// HashMap to maintain actor references to all the buildings that this actor manages.
 	private final static HashMap<String, ActorRef<Building.Command>> buildingDetails= new HashMap<String, ActorRef<Building.Command>>();
 
@@ -49,9 +53,28 @@ public class BuildingManager extends AbstractBehavior<BuildingManager.Command> {
 
 	@Override
 	public Receive<Command> createReceive() {
-		return newReceiveBuilder().onSignal(PostStop.class, signal -> terminate()).build();
+		return newReceiveBuilder()
+			.onMessageEquals(QueryAllSensors.INSTANCE, this::queryAllSensors)
+			.onSignal(PostStop.class, signal -> terminate())
+			.build();
 	}
 
+	/**
+	 * Method to query all temperature sensors in the application.
+	 * @return
+	 */
+	private Behavior<Command> queryAllSensors() {
+		for (String building: buildingDetails.keySet()) {
+			ActorRef<Building.Command> bRef = buildingDetails.get(building);
+			bRef.tell(Building.QueryAllFloors.INSTANCE);
+		}
+		return this;
+	}
+
+	/**
+	 * Terminates the application
+	 * @return
+	 */
 	private BuildingManager terminate() {
 		getContext().getLog().info("Building sensor monitoring system succesfully terminated.");
 		return this;

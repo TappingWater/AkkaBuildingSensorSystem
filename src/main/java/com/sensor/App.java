@@ -1,16 +1,18 @@
 package com.sensor;
 
 import java.io.Console;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.concurrent.CompletionStage;
 
 import com.sensor.actors.BuildingManager;
 import com.sensor.streams.DataStream;
-import com.sensor.utility.DeviceInfo;
 
+import akka.Done;
+import akka.actor.Cancellable;
 import akka.actor.typed.ActorSystem;
 import akka.stream.impl.io.InputStreamSinkStage.Data;
-import akka.stream.scaladsl.Sink;
 
 /**
  * Main class.
@@ -31,10 +33,13 @@ public final class App {
     public static void main(String[] args) {
         initializeApp();
         final ActorSystem<BuildingManager.Command> buildingSys = ActorSystem
-                .create(BuildingManager.create(buildingFloors, zoneCount), "building-sys");        
-        DataStream.generateSourceRef(buildingSys);             
-        DataStream.getStream().run(buildingSys);            
-        commandLoop(buildingSys);
+                .create(BuildingManager.create(buildingFloors, zoneCount), "building-sys"); 
+        DataStream.generateSourceRef(buildingSys);
+        Runnable r = ()->buildingSys.tell(BuildingManager.QueryAllSensors.INSTANCE);  
+        Runnable r2 = ()->DataStream.getStream().run(buildingSys);              
+        Cancellable cancellable = buildingSys.scheduler().scheduleWithFixedDelay(Duration.ofSeconds(1), Duration.ofSeconds(1), r, buildingSys.executionContext());
+        Cancellable cancellable2 = buildingSys.scheduler().scheduleWithFixedDelay(Duration.ofSeconds(1), Duration.ofSeconds(1), r2, buildingSys.executionContext());
+        commandLoop(buildingSys, cancellable);
     }
 
     /**
@@ -44,22 +49,26 @@ public final class App {
      * s buildingName or
      * status buildingName.
      */
-    private static void commandLoop(ActorSystem<BuildingManager.Command> sys) {
+    private static void commandLoop(ActorSystem<BuildingManager.Command> sys, Cancellable cancelQuery) {
         System.out.println("System will now generate alerts for sensor readings. In addition,");
         System.out.println("You can enter 'quit' to terminate the program.");
         Scanner command = new Scanner(System.in);
         System.out.println("Enter command: ");
         boolean running = true;
         while (running) {
-            switch (command.nextLine()) {
-                case "quit":
-                    sys.terminate();
-                    System.out.println("System terminated.");
-                    running = false;
-                default:
-                    System.out.println("Command not recognized!");
-                    break;
-            }
+            sys.tell(BuildingManager.QueryAllSensors.INSTANCE);
+            if (command.hasNextLine()) {
+                switch (command.nextLine()) {
+                    case "quit":
+                        cancelQuery.cancel();
+                        sys.terminate();
+                        System.out.println("System terminated.");
+                        running = false;
+                    default:
+                        System.out.println("Command not recognized!");
+                        break;
+                }   
+            }       
         }
         command.close();
     }

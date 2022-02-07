@@ -2,7 +2,8 @@ package com.sensor.actors;
 
 import com.sensor.streams.DataStream;
 import com.sensor.utility.DeviceInfo;
-import akka.actor.typed.ActorRef;
+
+import akka.actor.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -18,33 +19,11 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 
 	// Nested marker interface to represent the types of messages that the sensor
 	// can process.
-	public interface Command {
-	}
+	public interface Command {}
 
-	// Messages for actors should be immutable. declaring a class as static final
-	// insures us that the message would only be created once as a singleton class
-	// and only one thread can access it at a time.
-	// Represents a message that will be accepted by this actor to get the
-	// temperature.
-	public static final class GetTemp implements Command {
-		final ActorRef<CurrentTemp> replyTo;
-
-		public GetTemp(ActorRef<CurrentTemp> replyTo) {
-			this.replyTo = replyTo;
-		}
-	}
-
-	// Static class that represents the message sent to the stream which has the
-	// requestId and the value.
-	public static final class CurrentTemp {
-		final long requestId;
-		// Returns a value if something has been recorded in an optional object.
-		final Double value;
-
-		public CurrentTemp(long requestId, Double value) {
-			this.requestId = requestId;
-			this.value = value;
-		}
+	// ENUM that is used to signal the sensors to produce a reading.
+	public static enum GenerateReading implements Command {
+		INSTANCE
 	}
 
 	// To create a new sensor, we need to consider certain factors such as building,
@@ -63,22 +42,7 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 		super(context);
 		this.building = buildingName;
 		this.floor = floor;
-		this.zone = zone;
-		postReadings();
-	}
-
-	/**
-	 * Queue readings to source periodically
-	 * 
-	 * @return
-	 */
-	private void postReadings() {
-		while (true) {
-			if (DataStream.getSourceRef().isPresent()) {					
-				Double reading = 80.0;
-				DataStream.getSourceRef().get().tell(new DeviceInfo(building, floor, zone, reading, "Temp"), null);
-			}
-		}
+		this.zone = zone;		
 	}
 
 	/**
@@ -90,32 +54,30 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	@Override
 	public Receive<Command> createReceive() {
 		return newReceiveBuilder()
-				.onMessage(GetTemp.class, this::getTemp)
-				.onSignal(PostStop.class, signal -> onPostStop())
+				.onMessageEquals(GenerateReading.INSTANCE, this::generateReading)				
+				.onSignal(PostStop.class, signal ->terminate())
 				.build();
 	};
 
+	private Behavior<Command> generateReading() {
+		double randVal = (double) ((Math.random() * (78 - 63)) + 63);
+		DeviceInfo dataReading = new DeviceInfo(building, floor, zone, randVal, "Temp");
+		if (DataStream.getSourceRef().isPresent()) {
+			ActorRef source = DataStream.getSourceRef().get();
+			source.tell(dataReading, null);
+			System.out.println(randVal);
+		}		
+		return this;
+	}
+	
 	/**
-	 * Behavior called by actor to get temperature for the GetTemp class.
-	 * 
-	 * @param g
-	 *          GetTemp Message that will be sent to the actor to get a response.
+	 * Terminates the application
 	 * @return
 	 */
-	private Behavior<Command> getTemp(GetTemp g) {
-		// g.replyTo.tell(new CurrentTemp(g.requestId, return randomizedTempSource));
+	private TemperatureSensor terminate() {
+		getContext().getLog().info("Temp sensor in zone %d of floor %d inside building %s terminated", zone, floor, building);
 		return this;
 	}
 
-	/**
-	 * Method called when we need to shutdown the device gracefully.
-	 * 
-	 * @return
-	 */
-	private Behavior<Command> onPostStop() {
-		System.out.printf("\n Temperature sensor for zone %s in floor %s of building %s has been shut down.", zone,
-				floor, building);
-		return Behaviors.stopped();
-	}
 
 }

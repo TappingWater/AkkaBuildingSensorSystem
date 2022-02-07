@@ -2,6 +2,7 @@ package com.sensor.actors;
 
 import java.util.HashMap;
 
+import akka.actor.typed.PostStop;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -14,13 +15,17 @@ import akka.actor.typed.javadsl.Receive;
  */
 public class Floor extends AbstractBehavior<Floor.Command> {
 
-	public interface Command {
-	}
+	public interface Command {}
 
 	private final String buildingName;
 	private final int floorNum;
-	private final int zoneCount;
+
 	private final HashMap<Integer, ActorRef<Zone.Command>> zoneDetails = new HashMap<Integer, ActorRef<Zone.Command>>();
+
+	//Message to query all zones within a floor.
+	public static enum QueryAllZones implements Command {
+		INSTANCE
+	}
 
 	// When we create our system we call the create behavior to create our system.
 	public static Behavior<Command> create(String buildingName, int floorNum, int zoneCount) {
@@ -36,10 +41,9 @@ public class Floor extends AbstractBehavior<Floor.Command> {
 	 * The number of zones per floor
 	 */
 	private Floor(ActorContext<Command> context, String buildingName, int floorNum, int zoneCount) {
-		super(context);
-		this.floorNum = floorNum;
-		this.zoneCount = zoneCount;
+		super(context);	
 		this.buildingName = buildingName;
+		this.floorNum = floorNum;	
 		for (int i = 1; i <= zoneCount; i++) {
 			zoneDetails.put(i, context.spawn(Zone.create(i, buildingName, floorNum), String.valueOf(i)));
 		}
@@ -47,7 +51,27 @@ public class Floor extends AbstractBehavior<Floor.Command> {
 
 	@Override
 	public Receive<Command> createReceive() {
-		return null;
+		return newReceiveBuilder()
+			.onMessageEquals(QueryAllZones.INSTANCE, this::queryAllZones)
+			.onSignal(PostStop.class, signal -> terminate())
+			.build();
 	};
+	
+	private Behavior<Floor.Command> queryAllZones() {
+		for (Integer zone: zoneDetails.keySet()) {
+			ActorRef<Zone.Command> zoneRef = zoneDetails.get(zone);
+			zoneRef.tell(Zone.QueryAllSensors.INSTANCE);
+		}
+		return this;
+	}
+
+	/**
+	 * Terminates the application
+	 * @return
+	 */
+	private Floor terminate() {
+		getContext().getLog().info("Floor actor %d for building %s terminated.", floorNum, buildingName);
+		return this;
+	}
 
 }

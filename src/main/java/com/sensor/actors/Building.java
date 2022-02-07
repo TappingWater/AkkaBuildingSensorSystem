@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
+import akka.actor.typed.PostStop;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
@@ -19,9 +20,7 @@ public class Building extends AbstractBehavior<Building.Command> {
 	public interface Command {
 	}
 
-	private final String name;
-	private final int floorCount;
-	private final int zoneCount;
+	private final String name;	
 	private final HashMap<Integer, ActorRef<Floor.Command>> floorDetails = new HashMap<Integer, ActorRef<Floor.Command>>();
 
 	// When we create our system we call the create behavior to create our system.
@@ -29,11 +28,13 @@ public class Building extends AbstractBehavior<Building.Command> {
 		return Behaviors.setup(context -> new Building(context, buildingName, floorCount, zoneCount));
 	}
 
+	public static enum QueryAllFloors implements Command {
+		INSTANCE
+	}
+
 	private Building(ActorContext<Command> context, String buildingName, int floorCount, int zoneCount) {
 		super(context);
-		this.name = buildingName;
-		this.floorCount = floorCount;
-		this.zoneCount = zoneCount;
+		this.name = buildingName;		
 		for (int i = 1; i <= floorCount; i++) {
 			floorDetails.put(i, getContext().spawn(Floor.create(name, i, zoneCount), String.valueOf(i)));
 		}
@@ -41,7 +42,27 @@ public class Building extends AbstractBehavior<Building.Command> {
 
 	@Override
 	public Receive<Command> createReceive() {
-		return null;
+		return newReceiveBuilder()
+		.onMessageEquals(QueryAllFloors.INSTANCE, this::queryAllFloors)
+		.onSignal(PostStop.class, signal -> terminate())
+		.build();
 	};
+
+	private Behavior<Building.Command> queryAllFloors() {
+		for (Integer floor: floorDetails.keySet()) {
+			ActorRef<Floor.Command> floorRef = floorDetails.get(floor);
+			floorRef.tell(Floor.QueryAllZones.INSTANCE);
+		}
+		return this;
+	}
+
+	/**
+	 * Terminates the application
+	 * @return
+	 */
+	private Building terminate() {
+		getContext().getLog().info("Building %s within system terminated.", name);
+		return this;
+	}
 
 }
