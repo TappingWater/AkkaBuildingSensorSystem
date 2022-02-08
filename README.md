@@ -2,7 +2,7 @@
 Concurrent application built using the Akka toolkit to simulate an IOT system that tracks readings across multiple buildings
 
 # How it works:
-![Basic Diagram](https://ibb.co/3MnrrTS)
+![Basic Diagram](https://i.ibb.co/D8ZVV1w/Building-Sensor.jpg)
 
 As can be seen in the above diagram. The sensor system that generates the readings that are consumed by the stream is done through
 an actor system. The actor system follows the above hierachy. Akka provides a scheduler class that we can utilize to periodically tell
