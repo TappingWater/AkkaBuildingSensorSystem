@@ -2,6 +2,8 @@ package com.sensor.actors;
 
 import java.util.HashMap;
 
+import com.sensor.actors.Floor.QueryAllZones;
+
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
@@ -28,8 +30,12 @@ public class Building extends AbstractBehavior<Building.Command> {
 		return Behaviors.setup(context -> new Building(context, buildingName, floorCount, zoneCount));
 	}
 
-	public static enum QueryAllFloors implements Command {
-		INSTANCE
+	public static final class QueryAllFloors implements Command {
+		akka.actor.ActorRef stream;
+
+		public QueryAllFloors(akka.actor.ActorRef stream2) {
+			this.stream = stream2;
+		}
 	}
 
 	private Building(ActorContext<Command> context, String buildingName, int floorCount, int zoneCount) {
@@ -43,15 +49,16 @@ public class Building extends AbstractBehavior<Building.Command> {
 	@Override
 	public Receive<Command> createReceive() {
 		return newReceiveBuilder()
-		.onMessageEquals(QueryAllFloors.INSTANCE, this::queryAllFloors)
+		.onMessage(QueryAllFloors.class, this::queryAllFloors)
 		.onSignal(PostStop.class, signal -> terminate())
 		.build();
 	};
 
-	private Behavior<Building.Command> queryAllFloors() {
+	private Behavior<Building.Command> queryAllFloors(QueryAllFloors q) {
 		for (Integer floor: floorDetails.keySet()) {
 			ActorRef<Floor.Command> floorRef = floorDetails.get(floor);
-			floorRef.tell(Floor.QueryAllZones.INSTANCE);
+			QueryAllZones qaz = new QueryAllZones(q.stream);
+			floorRef.tell(qaz);
 		}
 		return this;
 	}

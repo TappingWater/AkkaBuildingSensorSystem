@@ -1,16 +1,12 @@
 package com.sensor.actors;
 
-import com.sensor.streams.DataStream;
 import com.sensor.utility.DeviceInfo;
-
-import akka.actor.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-
 
 /**
  * Actor object that represents a temperature sensor.
@@ -22,8 +18,12 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	public interface Command {}
 
 	// ENUM that is used to signal the sensors to produce a reading.
-	public static enum GenerateReading implements Command {
-		INSTANCE
+	public static final class GenerateReading implements Command {
+		akka.actor.ActorRef stream;
+
+		public GenerateReading(akka.actor.ActorRef stream2) {
+			this.stream = stream2;
+		}
 	}
 
 	// To create a new sensor, we need to consider certain factors such as building,
@@ -54,19 +54,21 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	@Override
 	public Receive<Command> createReceive() {
 		return newReceiveBuilder()
-				.onMessageEquals(GenerateReading.INSTANCE, this::generateReading)				
+				.onMessage(GenerateReading.class, this::generateReading)				
 				.onSignal(PostStop.class, signal ->terminate())
 				.build();
 	};
 
-	private Behavior<Command> generateReading() {
+	/**
+	 * Method that pushes a randomized reading from the sensor
+	 * onto our stream when requested by the scheduler.
+	 * @param r
+	 * @return
+	 */
+	private Behavior<Command> generateReading(GenerateReading r) {
 		double randVal = (double) ((Math.random() * (78 - 63)) + 63);
 		DeviceInfo dataReading = new DeviceInfo(building, floor, zone, randVal, "Temp");
-		if (DataStream.getSourceRef().isPresent()) {
-			ActorRef source = DataStream.getSourceRef().get();
-			source.tell(dataReading, null);
-			System.out.println(randVal);
-		}		
+		r.stream.tell(dataReading, null);
 		return this;
 	}
 	
@@ -75,7 +77,7 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	 * @return
 	 */
 	private TemperatureSensor terminate() {
-		getContext().getLog().info("Temp sensor in zone %d of floor %d inside building %s terminated", zone, floor, building);
+		System.out.printf("Temp sensor in zone %d of floor %d inside building %s terminated", zone, floor, building);
 		return this;
 	}
 

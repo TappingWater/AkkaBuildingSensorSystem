@@ -1,6 +1,7 @@
 package com.sensor.utility;
 
 /**
+ * Utility class used to feed information into a stream from the sensor.
  * Contains the needed information for a particular device such as:
  * building name
  * floor number
@@ -62,6 +63,10 @@ public class DeviceInfo {
 		return reading;
 	}
 
+	/**
+	 * Override the print method so that we can print device info objects directly
+	 * through system.out.println within the stream. Any changes to the format of the stream must be done here.
+	 */
 	@Override
 	public String toString() {
 		return "Temperature reading of " + reading + " detected on zone " + zoneNumber + " , located on floor "

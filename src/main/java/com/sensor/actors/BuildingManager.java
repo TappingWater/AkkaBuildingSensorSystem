@@ -1,7 +1,7 @@
 package com.sensor.actors;
 
 import java.util.HashMap;
-
+import com.sensor.actors.Building.QueryAllFloors;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
@@ -18,8 +18,13 @@ public class BuildingManager extends AbstractBehavior<BuildingManager.Command> {
 	public interface Command {
 	}
 
-	public static enum QueryAllSensors implements Command {
-		INSTANCE
+	public static final class QueryAllBuildings implements Command {
+		akka.actor.ActorRef stream;
+
+		public QueryAllBuildings(akka.actor.ActorRef stream2) {
+			this.stream = stream2;
+		}
+
 	}
 
 	// HashMap to maintain actor references to all the buildings that this actor manages.
@@ -54,7 +59,7 @@ public class BuildingManager extends AbstractBehavior<BuildingManager.Command> {
 	@Override
 	public Receive<Command> createReceive() {
 		return newReceiveBuilder()
-			.onMessageEquals(QueryAllSensors.INSTANCE, this::queryAllSensors)
+			.onMessage(QueryAllBuildings.class, this::queryAllBuildings)
 			.onSignal(PostStop.class, signal -> terminate())
 			.build();
 	}
@@ -63,10 +68,11 @@ public class BuildingManager extends AbstractBehavior<BuildingManager.Command> {
 	 * Method to query all temperature sensors in the application.
 	 * @return
 	 */
-	private Behavior<Command> queryAllSensors() {
+	private Behavior<Command> queryAllBuildings(QueryAllBuildings q) {
 		for (String building: buildingDetails.keySet()) {
 			ActorRef<Building.Command> bRef = buildingDetails.get(building);
-			bRef.tell(Building.QueryAllFloors.INSTANCE);
+			QueryAllFloors qaf = new QueryAllFloors(q.stream);
+			bRef.tell(qaf);
 		}
 		return this;
 	}

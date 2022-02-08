@@ -4,15 +4,12 @@ import java.io.Console;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Scanner;
-import java.util.concurrent.CompletionStage;
-
 import com.sensor.actors.BuildingManager;
+import com.sensor.actors.BuildingManager.QueryAllBuildings;
 import com.sensor.streams.DataStream;
-
-import akka.Done;
+import akka.actor.ActorRef;
 import akka.actor.Cancellable;
 import akka.actor.typed.ActorSystem;
-import akka.stream.impl.io.InputStreamSinkStage.Data;
 
 /**
  * Main class.
@@ -29,16 +26,14 @@ public final class App {
      * number of floors in each building and number of zones in each floor.
      * 
      * @param args The arguments of the program.
-     */
-    public static void main(String[] args) {
+     */    public static void main(String[] args) {
         initializeApp();
         final ActorSystem<BuildingManager.Command> buildingSys = ActorSystem
-                .create(BuildingManager.create(buildingFloors, zoneCount), "building-sys"); 
-        DataStream.generateSourceRef(buildingSys);
-        Runnable r = ()->buildingSys.tell(BuildingManager.QueryAllSensors.INSTANCE);  
-        Runnable r2 = ()->DataStream.getStream().run(buildingSys);              
-        Cancellable cancellable = buildingSys.scheduler().scheduleWithFixedDelay(Duration.ofSeconds(1), Duration.ofSeconds(1), r, buildingSys.executionContext());
-        Cancellable cancellable2 = buildingSys.scheduler().scheduleWithFixedDelay(Duration.ofSeconds(1), Duration.ofSeconds(1), r2, buildingSys.executionContext());
+                .create(BuildingManager.create(buildingFloors, zoneCount), "building-sys");
+        ActorRef stream = DataStream.getStream().run(buildingSys);         
+        QueryAllBuildings qab = new QueryAllBuildings(stream);       
+        Runnable r = ()->buildingSys.tell(qab);                      
+        Cancellable cancellable = buildingSys.scheduler().scheduleWithFixedDelay(Duration.ofSeconds(1), Duration.ofSeconds(1), r, buildingSys.executionContext());      
         commandLoop(buildingSys, cancellable);
     }
 
@@ -56,7 +51,7 @@ public final class App {
         System.out.println("Enter command: ");
         boolean running = true;
         while (running) {
-            sys.tell(BuildingManager.QueryAllSensors.INSTANCE);
+            DataStream.getStream().run(sys);           
             if (command.hasNextLine()) {
                 switch (command.nextLine()) {
                     case "quit":

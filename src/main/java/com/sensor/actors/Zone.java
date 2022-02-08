@@ -1,6 +1,9 @@
 package com.sensor.actors;
 
 import akka.actor.typed.PostStop;
+
+import com.sensor.actors.TemperatureSensor.GenerateReading;
+
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -8,6 +11,11 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 
+/**
+ * Actor class  that represents a zone in a building.
+ * A zone will have a dedicated group of sensors for temperature,
+ * humidity and illumination.
+ */
 public class Zone extends AbstractBehavior<Zone.Command> {
 	public interface Command {}
 
@@ -16,8 +24,12 @@ public class Zone extends AbstractBehavior<Zone.Command> {
 	private final int zoneNum;
 	private ActorRef<TemperatureSensor.Command> tempSensor;
 	
-	public static enum QueryAllSensors implements Command {
-		INSTANCE
+	public static final class QueryAllSensors implements Command {
+		akka.actor.ActorRef stream;
+
+		public QueryAllSensors(akka.actor.ActorRef stream2) {
+			this.stream = stream2;
+		}
 	}
 	
 	private Zone(ActorContext<Command> context, int zoneNo, String buildingName, int floorNum) {
@@ -36,14 +48,15 @@ public class Zone extends AbstractBehavior<Zone.Command> {
 	@Override
 	public Receive<Command> createReceive() {		
 		return newReceiveBuilder()
-			.onMessageEquals(QueryAllSensors.INSTANCE, this::querySensors)
+			.onMessage(QueryAllSensors.class, this::querySensors)
 			.onSignal(PostStop.class, signal->terminate())
 			.build();
 	}
 
 	//Method that queries all sensors in zone to generate a reading.
-	private Behavior<Command> querySensors() {
-		tempSensor.tell(TemperatureSensor.GenerateReading.INSTANCE);
+	private Behavior<Command> querySensors(QueryAllSensors q) {
+		GenerateReading gr = new GenerateReading(q.stream);
+		tempSensor.tell(gr);
 		return this;
 	} 
 
