@@ -1,6 +1,8 @@
 package com.sensor.actors;
 
 import com.sensor.utility.DeviceInfo;
+import com.sensor.utility.ReadingConfig;
+
 import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -66,7 +68,7 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	 * @return
 	 */
 	private Behavior<Command> generateReading(GenerateReading r) {
-		double randVal = (double) ((Math.random() * (78 - 63)) + 63);
+		double randVal = (double) ((Math.random() * ((ReadingConfig.tempUpper+3) - (ReadingConfig.tempLower-3) + ReadingConfig.tempLower)));
 		DeviceInfo dataReading = new DeviceInfo(building, floor, zone, randVal, "Temp");
 		r.stream.tell(dataReading, null);
 		return this;
