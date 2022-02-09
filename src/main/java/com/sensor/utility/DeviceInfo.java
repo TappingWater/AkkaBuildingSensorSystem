@@ -13,9 +13,13 @@ public class DeviceInfo {
 	private int floorNumber;
 	private int zoneNumber;
 	private Double reading;
-	private String type;
+	private types type;
 
-	public DeviceInfo(String building, int floorNum, int zoneNum, Double reading, String type) {
+	public static enum types {
+		TEMP, LIGHT, HUMIDITY
+	}
+
+	public DeviceInfo(String building, int floorNum, int zoneNum, Double reading, types type) {
 		this.buildingName = building;
 		this.floorNumber = floorNum;
 		this.zoneNumber = zoneNum;
@@ -23,7 +27,7 @@ public class DeviceInfo {
 		this.type = type;
 	}
 
-	public void setType(String type) {
+	public void setType(types type) {
 		this.type = type;
 	}
 
@@ -43,7 +47,7 @@ public class DeviceInfo {
 		reading = d;
 	}
 
-	public String getType() {
+	public types getType() {
 		return type;
 	}
 
@@ -69,8 +73,17 @@ public class DeviceInfo {
 	 */
 	@Override
 	public String toString() {
-		return "Temperature reading of " + reading + " detected on zone " + zoneNumber + " , located on floor "
-				+ floorNumber + " inside building named" + buildingName;
+		if (type == types.TEMP) {
+			return "Temperature reading of " + reading + " detected on zone " + zoneNumber + " , located on floor "
+				+ floorNumber + " ,inside building named " + buildingName;
+		} else if (type == types.HUMIDITY) {
+			return "Humidity reading of " + reading + " detected on zone " + zoneNumber + " , located on floor "
+				+ floorNumber + " ,inside building named " + buildingName;
+		} else {
+			return "Light reading of " + reading + " detected on zone " + zoneNumber + " , located on floor "
+				+ floorNumber + " ,inside building named " + buildingName;
+		}
+		
 	}
 
 }

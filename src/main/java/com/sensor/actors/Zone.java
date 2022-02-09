@@ -2,7 +2,9 @@ package com.sensor.actors;
 
 import akka.actor.typed.PostStop;
 
-import com.sensor.actors.TemperatureSensor.GenerateReading;
+import com.sensor.actors.HumiditySensor.GenerateHumidity;
+import com.sensor.actors.LightSensor.GenerateLight;
+import com.sensor.actors.TemperatureSensor.GenerateTemp;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
@@ -23,6 +25,8 @@ public class Zone extends AbstractBehavior<Zone.Command> {
 	private final int floorNum;
 	private final int zoneNum;
 	private ActorRef<TemperatureSensor.Command> tempSensor;
+	private ActorRef<HumiditySensor.Command> humiditySensor;
+	private ActorRef<LightSensor.Command> lightSensor;
 	
 	public static final class QueryAllSensors implements Command {
 		akka.actor.ActorRef stream;
@@ -37,7 +41,9 @@ public class Zone extends AbstractBehavior<Zone.Command> {
 		this.zoneNum = zoneNo;
 		this.buildingName = buildingName;
 		this.floorNum = floorNum;
-		tempSensor = context.spawn(TemperatureSensor.create(buildingName, floorNum, zoneNum), "temp");
+		tempSensor = context.spawn(TemperatureSensor.create(buildingName, floorNum, zoneNum), "temp-sensor");
+		lightSensor = context.spawn(LightSensor.create(buildingName, floorNum, zoneNum), "light-sensor");
+		humiditySensor = context.spawn(HumiditySensor.create(buildingName, floorNum, zoneNum), "humidity-sensor");
 	}
 
 	// When we create our system we call the create behavior to create our system.
@@ -55,8 +61,12 @@ public class Zone extends AbstractBehavior<Zone.Command> {
 
 	//Method that queries all sensors in zone to generate a reading.
 	private Behavior<Command> querySensors(QueryAllSensors q) {
-		GenerateReading gr = new GenerateReading(q.stream);
-		tempSensor.tell(gr);
+		GenerateTemp gt = new GenerateTemp(q.stream);
+		GenerateHumidity gh = new GenerateHumidity(q.stream);
+		GenerateLight gl = new GenerateLight(q.stream);
+		tempSensor.tell(gt);
+		humiditySensor.tell(gh);
+		lightSensor.tell(gl);
 		return this;
 	} 
 

@@ -19,11 +19,14 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	// can process.
 	public interface Command {}
 
-	// ENUM that is used to signal the sensors to produce a reading.
-	public static final class GenerateReading implements Command {
+	/**
+	 * Message to be passed to this actor to produce a behavior that will
+	 * pass the produced reading from the sensor to the stream.
+	 */
+	public static final class GenerateTemp implements Command {
 		akka.actor.ActorRef stream;
 
-		public GenerateReading(akka.actor.ActorRef stream2) {
+		public GenerateTemp(akka.actor.ActorRef stream2) {
 			this.stream = stream2;
 		}
 	}
@@ -56,7 +59,7 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	@Override
 	public Receive<Command> createReceive() {
 		return newReceiveBuilder()
-				.onMessage(GenerateReading.class, this::generateReading)				
+				.onMessage(GenerateTemp.class, this::generateReading)				
 				.onSignal(PostStop.class, signal ->terminate())
 				.build();
 	};
@@ -67,9 +70,9 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 	 * @param r
 	 * @return
 	 */
-	private Behavior<Command> generateReading(GenerateReading r) {
+	private Behavior<Command> generateReading(GenerateTemp r) {
 		double randVal = (double) ((Math.random() * ((ReadingConfig.tempUpper+3) - (ReadingConfig.tempLower-3) + ReadingConfig.tempLower)));
-		DeviceInfo dataReading = new DeviceInfo(building, floor, zone, randVal, "Temp");
+		DeviceInfo dataReading = new DeviceInfo(building, floor, zone, randVal, DeviceInfo.types.TEMP);
 		r.stream.tell(dataReading, null);
 		return this;
 	}
@@ -82,6 +85,4 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
 		System.out.printf("Temp sensor in zone %d of floor %d inside building %s terminated", zone, floor, building);
 		return this;
 	}
-
-
 }
