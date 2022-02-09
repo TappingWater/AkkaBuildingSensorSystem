@@ -25,12 +25,12 @@ great way to process streams. We can forward the readings we get from our actor 
 any readings that are sent by the actors.
 
 # Features:
-Concurrent application.
-Initialize application using user input.
-Use of akka actors to simulate device sensors.
-Use of akka actor hierachy to map entities such as buildings, floors, zones and sensors.
-Use of inbuilt akka stream components like sources, flows and sinks to implement a runnable graph.(Akka's version of a blueprint for a stream)
-Use of akka streams to implement a custom flow component to filter readings from device sensor actors.
+* Concurrent application.
+* Initialize application using user input.
+* Use of akka actors to simulate device sensors.
+* Use of akka actor hierachy to map entities such as buildings, floors, zones and sensors.
+* Use of inbuilt akka stream components like sources, flows and sinks to implement a runnable graph.(Akka's version of a blueprint for a stream)
+* Use of akka streams to implement a custom flow component to filter readings from device sensor actors.
 
 # How it works:
 ![Basic Diagram](https://i.ibb.co/D8ZVV1w/Building-Sensor.jpg)
