@@ -46,8 +46,8 @@ public class App {
         System.out.println("Enter command: ");
         boolean running = true;
         while (running) {
-            if (command.hasNext()) {
-                if (command.next().equals("quit")) {
+            if (command.hasNextLine()) {
+                if (command.nextLine().equals("quit")) {
                     System.out.println("listening");
                     cancelQuery.cancel();
                     sys.terminate();

@@ -6,8 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="buildingSensor" />
+        <module name="intellij-akka-sensor" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="intellij-akka-sensor" target="11" />
+    </bytecodeTargetLevel>
   </component>
 </project>
