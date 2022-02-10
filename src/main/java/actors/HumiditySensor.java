@@ -45,14 +45,14 @@ public class HumiditySensor extends AbstractBehavior<HumiditySensor.Command> {
     }
 
     private Behavior<Command> generateReading(GenerateHumidity r) {
-        double randVal = (double) ((Math.random() * ((ReadingConfig.humidityUpper+3) - (ReadingConfig.humidityLower-3) + (ReadingConfig.humidityLower-3))));
+        double randVal = (double) ((Math.random() * ((ReadingConfig.humidityUpper+1) - (ReadingConfig.humidityLower-1) + (ReadingConfig.humidityLower-1))));
         DeviceInfo dataReading = new DeviceInfo(building, floor, zone, randVal, DeviceInfo.types.HUMIDITY);
         r.stream.tell(dataReading, null);
         return this;
     }
 
     private HumiditySensor terminate() {
-        System.out.printf("Humidity sensor in zone %d of floor %d inside building %s terminated", zone, floor, building);
+        System.out.printf("Humidity sensor in zone %d of floor %d inside building %s terminated \n", zone, floor, building);
         return this;
     }
 }

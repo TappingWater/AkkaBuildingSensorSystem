@@ -67,7 +67,7 @@ public class Building extends AbstractBehavior<Building.Command> {
      * @return
      */
     private Building terminate() {
-        getContext().getLog().info("Building %s within system terminated.", name);
+        System.out.printf("Building %s within system terminated. \n", name);
         return this;
     }
 

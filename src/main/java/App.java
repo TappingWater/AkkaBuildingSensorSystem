@@ -51,13 +51,13 @@ public class App {
                     System.out.println("listening");
                     cancelQuery.cancel();
                     sys.terminate();
-                    System.out.println("System terminated.");
                     running = false;
                 } else {
                     System.out.println("Command not recognized");
                 }
             }
         }
+        System.out.println("System terminated.");
         command.close();
     }
 

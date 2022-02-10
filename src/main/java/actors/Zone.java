@@ -71,7 +71,7 @@ public class Zone extends AbstractBehavior<Zone.Command> {
      * @return
      */
     private Zone terminate() {
-        getContext().getLog().info("Zone %d actor for floor %d in building %s has been succesfully terminated.", zoneNum, floorNum, buildingName);
+       System.out.printf("Zone %d actor for floor %d in building %s has been succesfully terminated.\n", zoneNum, floorNum, buildingName);
         return this;
     }
 

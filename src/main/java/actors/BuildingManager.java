@@ -78,7 +78,7 @@ public class BuildingManager extends AbstractBehavior<BuildingManager.Command> {
      * Terminates the application
      */
     private BuildingManager terminate() {
-        getContext().getLog().info("Building sensor monitoring system succesfully terminated.");
+        System.out.println("Building sensor monitoring system succesfully terminated.");
         return this;
     }
 

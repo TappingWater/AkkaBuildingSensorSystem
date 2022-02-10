@@ -70,7 +70,7 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
      * @return
      */
     private Behavior<Command> generateReading(GenerateTemp r) {
-        double randVal = (double) ((Math.random() * (78 - 63) + 63));
+        double randVal = (double) ((Math.random() * (76 - 64) + 64));
         DeviceInfo dataReading = new DeviceInfo(building, floor, zone, randVal, DeviceInfo.types.TEMP);
         r.stream.tell(dataReading, null);
         return this;
@@ -81,7 +81,7 @@ public class TemperatureSensor extends AbstractBehavior<TemperatureSensor.Comman
      * @return
      */
     private TemperatureSensor terminate() {
-        System.out.printf("Temp sensor in zone %d of floor %d inside building %s terminated", zone, floor, building);
+        System.out.printf("Temp sensor in zone %d of floor %d inside building %s terminated \n", zone, floor, building);
         return this;
     }
 }

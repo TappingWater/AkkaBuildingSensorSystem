@@ -75,7 +75,7 @@ public class Floor extends AbstractBehavior<Floor.Command> {
      * @return
      */
     private Floor terminate() {
-        getContext().getLog().info("Floor actor %d for building %s terminated.", floorNum, buildingName);
+        System.out.printf("Floor actor %d for building %s terminated.\n", floorNum, buildingName);
         return this;
     }
 

@@ -44,14 +44,14 @@ public class LightSensor extends AbstractBehavior<LightSensor.Command> {
     }
 
     private Behavior<Command> generateReading(GenerateLight r) {
-        double randVal = (double) ((Math.random() * ((ReadingConfig.lightUpper+3) - (ReadingConfig.lightLower-3) + (ReadingConfig.lightLower + 3))));
+        double randVal = (double) ((Math.random() * ((ReadingConfig.lightUpper+1) - (ReadingConfig.lightLower-1) + (ReadingConfig.lightLower + 1))));
         DeviceInfo dataReading = new DeviceInfo(building, floor, zone, randVal, DeviceInfo.types.LIGHT);
         r.stream.tell(dataReading, null);
         return this;
     }
 
     private LightSensor terminate() {
-        System.out.printf("Light sensor in zone %d of floor %d inside building %s terminated", zone, floor, building);
+        System.out.printf("Light sensor in zone %d of floor %d inside building %s terminated \n", zone, floor, building);
         return this;
     }
 }
